@@ -56,7 +56,18 @@
             "determinePhiX.formatData.mem": null,  
             "determinePhiX.formatData.modules": null,  
             "determinePhiX.basesMask": "y*,n*,y*",  
-            "determinePhiX.runDirectory":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
+            "determinePhiX.runDirectory": {
+                "contents": {
+                    "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
+                    "externalIds": [
+                        {
+                            "id": "TEST",
+                            "provider": "TEST"
+                        }
+                    ]
+                },
+                "type": "EXTERNAL"
+            }, 
             "determinePhiX.generateFastqs.modules": null
 
         },
@@ -128,7 +139,18 @@
             "determinePhiX.formatData.mem": null,  
             "determinePhiX.formatData.modules": null,  
             "determinePhiX.basesMask": "y*,n*,n*,y*",
-            "determinePhiX.runDirectory": "/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",  
+            "determinePhiX.runDirectory": {
+                "contents": {
+                    "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
+                    "externalIds": [
+                        {
+                            "id": "TEST",
+                            "provider": "TEST"
+                        }
+                    ]
+                },
+                "type": "EXTERNAL"
+            },  
             "determinePhiX.generateFastqs.modules": null
         },
         "validators": [
