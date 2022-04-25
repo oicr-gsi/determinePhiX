@@ -1,0 +1,73 @@
+## Commands
+This section lists command(s) run by determinePhiX workflow
+
+* Running WORKFLOW
+
+Workflow to determine PhiX contamination of undetermined reads.
+
+### Gathering undetermined reads from BCL data
+```
+    module load ~{modules}
+    ~{bcl2fastq} \
+    --runfolder-dir "~{runDirectory}" \
+    --intensities-dir "~{runDirectory}/Data/Intensities/" \
+    --processing-threads 8 \
+    --output-dir "~{outputDirectory}" \
+    --create-fastq-for-index-reads \
+    --sample-sheet "/dev/null" \
+    --tiles "s_[~{sep='' lanes}]" \
+    --use-bases-mask "~{basesMask}" \
+    --no-lane-splitting \
+    --interop-dir "~{outputDirectory}/Interop"
+```
+### Obtaining decontaminated reads and metrics
+```
+$BBMAP_ROOT/share/bbmap/bbduk.sh \
+threads=6 \
+in1=~{read1} \
+in2=~{read2} \
+outm1=matched1.fastq.gz \
+outm2=matched2.fastq.gz \
+ref=$BBMAP_ROOT/share/bbmap/resources/phix174_ill.ref.fa.gz \
+k=31 \
+hdist=1
+
+```
+### Formatting output data into TXT and JSON format
+```
+
+cp ~{data} ./outputData.txt
+
+python3<<CODE
+import re
+import json
+
+with open(r'~{data}') as f:
+    lines = f.readlines()
+for i in lines:
+    if "Contaminants" in i:
+        data = i
+
+# Create dictionary with contamination data
+metricsJson = {}
+
+# Adding read data
+reads = re.compile("(\d+)(?=\s*reads)")
+metricsJson["reads"] = reads.findall(data)[0]
+
+# Adding bases data
+bases = re.compile("(\d+)(?=\s*bases)")
+metricsJson["bases"] = bases.findall(data)[0]
+
+# Adding contamination data (formatted to 2 decimal places)
+contamination = re.compile("(\d\.\d+)(?=\s*%)")
+metricsJson["phiX_contamination"] = float("{:.4}".format(contamination.findall(data)[0]))
+
+# Write dictionary out to JSON file
+out = open("data.json","w")
+json.dump(metricsJson, out)
+out.close()
+
+CODE
+
+```

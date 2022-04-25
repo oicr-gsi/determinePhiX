@@ -8,6 +8,10 @@ workflow determinePhiX {
     String? outputFileNamePrefix
   }
 
+# ======================================================
+#      Collecting undetermined reads
+# ======================================================
+
   call generateFastqs {
     input:
       runDirectory = runDirectory,
@@ -15,11 +19,19 @@ workflow determinePhiX {
       basesMask = basesMask
   }
 
+# ======================================================
+#      Generating contamination data
+# ======================================================
+
   call getPhiXData {
     input:
       read1 = generateFastqs.read1,
       read2 = generateFastqs.read2
   }
+
+# ======================================================
+#       Formatting data into JSON and TXT
+# ======================================================
 
   call formatData {
     input:
@@ -34,10 +46,7 @@ workflow determinePhiX {
   }
 
   parameter_meta {
-    runDirectory: {
-      description: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE).",
-      vidarr_type: "directory"
-    }
+    runDirectory: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE)."
     lanes: "A single lane or a list of lanes for no lane splitting (merging lanes)."
     basesMask: "The bases mask to produce the index reads (e.g. single 8bp index = \"Y1N*,I8,N*\", dual 8bp index = \"Y1N*,I8,I8,N*\")."
     outputFileNamePrefix: "Output prefix to prefix output file names with."
@@ -123,6 +132,10 @@ task generateFastqs {
   }
 }
 
+# ======================================================
+#      Outputting matched reads and contaminant data
+# ======================================================
+
 task getPhiXData {
   input {
     File read1
@@ -176,6 +189,10 @@ hdist=1
   }
 
 }
+
+# ======================================================
+#      Formatting data into json and txt files
+# ======================================================
 
 task formatData {
   input {
