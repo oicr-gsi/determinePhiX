@@ -55,8 +55,8 @@
             "determinePhiX.getPhiXData.modules": null,  
             "determinePhiX.formatData.mem": null,  
             "determinePhiX.formatData.modules": null,  
-            "determinePhiX.basesMask": "y*,n*,y*",  
-            "determinePhiX.runDirectory": "/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
+            "determinePhiX.basesMask":"y*,n*,y*",  
+            "determinePhiX.runDirectory":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
             "determinePhiX.generateFastqs.modules": null
         },
         "validators": [
