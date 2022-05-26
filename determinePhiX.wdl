@@ -22,10 +22,13 @@ workflow determinePhiX {
       outputFileNamePrefix = outputFileNamePrefix
   }
 
-  call getPhiXDataBBmap {
-    input:
-      read1 = generateFastqs.read1,
-      outputFileNamePrefix = outputFileNamePrefix
+  scatter (read in generateFastqs.reads) {
+    call getPhiXData {
+      input:
+        fastqSingleRead = read.right,
+        read = read.left,
+        outputFileNamePrefix = outputFileNamePrefix
+    }
   }
 
   call formatData {
@@ -34,11 +37,6 @@ workflow determinePhiX {
   }
 
   output {
-    File matchedRead1 = getPhiXData.matchedRead1
-    File matchedRead2 = getPhiXData.matchedRead2
-    File bbdukOut = getPhiXData.data
-    File bbmapOut = getPhiXDataBBmap.data
-    File dataFile = formatData.outputData
     File metricsJson = formatData.metrics
   }
 
@@ -89,7 +87,6 @@ task generateFastqs {
   String outputDirectory = "out"
 
   command <<<
-    module load ~{modules}
     ~{bcl2fastq} \
     --runfolder-dir "~{runDirectory}" \
     --intensities-dir "~{runDirectory}/Data/Intensities/" \
@@ -101,11 +98,13 @@ task generateFastqs {
     --use-bases-mask "~{basesMask}" \
     --no-lane-splitting \
     --interop-dir "~{outputDirectory}/Interop"
+
+    mv ~{outputDirectory}/Undetermined_S0_R1_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R1_001.fastq.gz
+    mv ~{outputDirectory}/Undetermined_S0_R2_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R2_001.fastq.gz
   >>>
 
   output {
-    File read1 = "~{outputDirectory}/Undetermined_S0_R1_001.fastq.gz"
-    File read2 = "~{outputDirectory}/Undetermined_S0_R2_001.fastq.gz"
+    Array[Pair[String, File]] reads = [("1","~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R1_001.fastq.gz"),("2","~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R2_001.fastq.gz")]
   }
 
   runtime {
@@ -134,8 +133,8 @@ task generateFastqs {
 
 task getPhiXData {
   input {
-    File read1
-    File read2
+    File fastqSingleRead
+    String read
     String outputFileNamePrefix
     String modules = "bbmap/38.75"
     Int mem = 32
@@ -145,73 +144,21 @@ task getPhiXData {
 
   command <<<
 
-  $BBMAP_ROOT/share/bbmap/bbduk.sh \
-  threads=6 \
-  in1=~{read1} \
-  in2=~{read2} \
-  outm1=~{outputFileNamePrefix}.matched1.fastq.gz \
-  outm2=~{outputFileNamePrefix}.matched2.fastq.gz \
-  ref=$BBMAP_ROOT/share/bbmap/resources/phix174_ill.ref.fa.gz \
-  k=31 \
-  hdist=1 -Xmx32g
-
-  >>>
-
-  output {
-    File data = stderr()
-    File matchedRead1 = "~{outputFileNamePrefix}.matched1.fastq.gz"
-    File matchedRead2 = "~{outputFileNamePrefix}.matched2.fastq.gz"
-  }
-
-  runtime {
-    memory: "~{mem} GB"
-    modules: "~{modules}"
-    timeout: "~{timeout}"
-    cpu: "~{threads}"
-  }
-
-  parameter_meta {
-    read1: "Undetermined read 1 from bcl data"
-    read2: "Undetermined read 2 from bcl data"
-    modules: "Environment module name and version to load (space separated) before command execution."
-    mem: "Memory (in GB) to allocate to the job."
-    timeout: "Maximum amount of time (in hours) the task can run for."
-    threads: "Requested CPU threads"
-
-  }
-
-  meta {
-    output_meta: {
-      data: "File containing stdout from PhiX determination step",
-      matchedRead1: "Read 1 with contaminated bases removed",
-      matchedRead2: "Read 2 with contaminated bases removed"
-    }
-  }
-
-}
-
-task getPhiXDataBBmap {
-  input {
-    File read1
-    String outputFileNamePrefix
-    String modules = "bbmap/38.75 samtools/1.15"
-    Int mem = 32
-    Int timeout = 6
-    Int threads = 6
-  }
-
-  command <<<
-
   $BBMAP_ROOT/share/bbmap/bbmap.sh \
   threads=6 \
-  in=~{read1} \
+  in=~{fastqSingleRead} \
   out=~{outputFileNamePrefix}.sam \
   ref=$BBMAP_ROOT/share/bbmap/resources/phix174_ill.ref.fa.gz \
   nodisk -Xmx32g
+
+  echo "read=~{read}" > ~{outputFileNamePrefix}_data.txt
+  echo "sequencing_run=~{outputFileNamePrefix}" >> ~{outputFileNamePrefix}_data.txt
+  cat stderr >>  ~{outputFileNamePrefix}_data.txt
+
   >>>
 
   output {
-    File data = stderr()
+    File data = "~{outputFileNamePrefix}_data.txt"
   }
 
   runtime {
@@ -222,7 +169,7 @@ task getPhiXDataBBmap {
   }
 
   parameter_meta {
-    read1: "Undetermined read 1 from bcl data"
+    fastqSingleRead: "Undetermined read 1 from bcl2fastq"
     modules: "Environment module name and version to load (space separated) before command execution."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
@@ -232,7 +179,7 @@ task getPhiXDataBBmap {
 
   meta {
     output_meta: {
-      data: "File containing stdout from PhiX determination step",
+      data: "File containing stdout from PhiX determination step"
     }
   }
 
@@ -240,41 +187,35 @@ task getPhiXDataBBmap {
 
 task formatData {
   input {
-    File data
+    Array[File] data
     String modules = ""
     Int mem = 32
     Int timeout = 6
   }
 
   command <<<
-    cp ~{data} ./outputData.txt
 
     python3<<CODE
     import re
     import json
 
-    with open(r'~{data}') as f:
+    with open(r'~{data[0]}') as f:
         lines = f.readlines()
-    for i in lines:
-        if "Contaminants" in i:
-            data = i
 
     # Create dictionary with contamination data
     metricsJson = {}
 
-    # Adding read data
-    reads = re.compile("(\d+)(?=\s*reads)")
-    metricsJson["reads"] = reads.findall(data)[0]
+    for line in lines:
+        line_split = line.split("\t")
+        if "Reads Used" in line:
+            metricsJson["total_reads"] = line_split[1]
+            metricsJson["total_bases"] = line_split[2].split(" ")[0][1:]
 
-    # Adding bases data
-    bases = re.compile("(\d+)(?=\s*bases)")
-    metricsJson["bases"] = bases.findall(data)[0]
+        if "mapped" in line:
+            metricsJson["pct_reads_align_phiX"] = round(float(line_split[1].strip()[:-1]),2)
+            metricsJson["number_reads_align_phiX"] = line_split[2].strip()
 
-    # Adding contamination data (formatted to 2 decimal places)
-    contamination = re.compile("(\d\.\d+)(?=\s*%)")
-    metricsJson["phiX_contamination"] = float("{:.4}".format(contamination.findall(data)[0]))
-
-    # Write dictionary out to JSON file
+    #Write dictionary out to JSON file
     out = open("data.json","w")
     json.dump(metricsJson, out)
     out.close()
@@ -284,7 +225,6 @@ task formatData {
 
   output {
     File metrics = "data.json"
-    File outputData = "outputData.txt"
   }
 
   runtime {
