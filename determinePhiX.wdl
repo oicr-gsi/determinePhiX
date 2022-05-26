@@ -5,7 +5,7 @@ workflow determinePhiX {
     String runDirectory
     Array[Int] lanes
     String basesMask
-    String? outputFileNamePrefix
+    String outputFileNamePrefix
   }
 
   call generateFastqs {
@@ -18,7 +18,14 @@ workflow determinePhiX {
   call getPhiXData {
     input:
       read1 = generateFastqs.read1,
-      read2 = generateFastqs.read2
+      read2 = generateFastqs.read2,
+      outputFileNamePrefix = outputFileNamePrefix
+  }
+
+  call getPhiXDataBBmap {
+    input:
+      read1 = generateFastqs.read1,
+      outputFileNamePrefix = outputFileNamePrefix
   }
 
   call formatData {
@@ -29,6 +36,8 @@ workflow determinePhiX {
   output {
     File matchedRead1 = getPhiXData.matchedRead1
     File matchedRead2 = getPhiXData.matchedRead2
+    File bbdukOut = getPhiXData.data
+    File bbmapOut = getPhiXDataBBmap.data
     File dataFile = formatData.outputData
     File metricsJson = formatData.metrics
   }
@@ -127,35 +136,38 @@ task getPhiXData {
   input {
     File read1
     File read2
+    String outputFileNamePrefix
     String modules = "bbmap/38.75"
     Int mem = 32
     Int timeout = 6
+    Int threads = 6
   }
 
   command <<<
 
-$BBMAP_ROOT/share/bbmap/bbduk.sh \
-threads=6 \
-in1=~{read1} \
-in2=~{read2} \
-outm1=matched1.fastq.gz \
-outm2=matched2.fastq.gz \
-ref=$BBMAP_ROOT/share/bbmap/resources/phix174_ill.ref.fa.gz \
-k=31 \
-hdist=1
+  $BBMAP_ROOT/share/bbmap/bbduk.sh \
+  threads=6 \
+  in1=~{read1} \
+  in2=~{read2} \
+  outm1=~{outputFileNamePrefix}.matched1.fastq.gz \
+  outm2=~{outputFileNamePrefix}.matched2.fastq.gz \
+  ref=$BBMAP_ROOT/share/bbmap/resources/phix174_ill.ref.fa.gz \
+  k=31 \
+  hdist=1 -Xmx32g
 
   >>>
 
   output {
     File data = stderr()
-    File matchedRead1 = "matched1.fastq.gz"
-    File matchedRead2 = "matched2.fastq.gz"
+    File matchedRead1 = "~{outputFileNamePrefix}.matched1.fastq.gz"
+    File matchedRead2 = "~{outputFileNamePrefix}.matched2.fastq.gz"
   }
 
   runtime {
     memory: "~{mem} GB"
     modules: "~{modules}"
     timeout: "~{timeout}"
+    cpu: "~{threads}"
   }
 
   parameter_meta {
@@ -164,6 +176,7 @@ hdist=1
     modules: "Environment module name and version to load (space separated) before command execution."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
+    threads: "Requested CPU threads"
 
   }
 
@@ -172,6 +185,54 @@ hdist=1
       data: "File containing stdout from PhiX determination step",
       matchedRead1: "Read 1 with contaminated bases removed",
       matchedRead2: "Read 2 with contaminated bases removed"
+    }
+  }
+
+}
+
+task getPhiXDataBBmap {
+  input {
+    File read1
+    String outputFileNamePrefix
+    String modules = "bbmap/38.75 samtools/1.15"
+    Int mem = 32
+    Int timeout = 6
+    Int threads = 6
+  }
+
+  command <<<
+
+  $BBMAP_ROOT/share/bbmap/bbmap.sh \
+  threads=6 \
+  in=~{read1} \
+  out=~{outputFileNamePrefix}.sam \
+  ref=$BBMAP_ROOT/share/bbmap/resources/phix174_ill.ref.fa.gz \
+  nodisk -Xmx32g
+  >>>
+
+  output {
+    File data = stderr()
+  }
+
+  runtime {
+    memory: "~{mem} GB"
+    modules: "~{modules}"
+    timeout: "~{timeout}"
+    cpu: "~{threads}"
+  }
+
+  parameter_meta {
+    read1: "Undetermined read 1 from bcl data"
+    modules: "Environment module name and version to load (space separated) before command execution."
+    mem: "Memory (in GB) to allocate to the job."
+    timeout: "Maximum amount of time (in hours) the task can run for."
+    threads: "Requested CPU threads"
+
+  }
+
+  meta {
+    output_meta: {
+      data: "File containing stdout from PhiX determination step",
     }
   }
 
@@ -186,41 +247,39 @@ task formatData {
   }
 
   command <<<
+    cp ~{data} ./outputData.txt
 
-cp ~{data} ./outputData.txt
+    python3<<CODE
+    import re
+    import json
 
-python3<<CODE
-import re
-import json
+    with open(r'~{data}') as f:
+        lines = f.readlines()
+    for i in lines:
+        if "Contaminants" in i:
+            data = i
 
-with open(r'~{data}') as f:
-    lines = f.readlines()
-for i in lines:
-    if "Contaminants" in i:
-        data = i
+    # Create dictionary with contamination data
+    metricsJson = {}
 
-# Create dictionary with contamination data
-metricsJson = {}
+    # Adding read data
+    reads = re.compile("(\d+)(?=\s*reads)")
+    metricsJson["reads"] = reads.findall(data)[0]
 
-# Adding read data
-reads = re.compile("(\d+)(?=\s*reads)")
-metricsJson["reads"] = reads.findall(data)[0]
+    # Adding bases data
+    bases = re.compile("(\d+)(?=\s*bases)")
+    metricsJson["bases"] = bases.findall(data)[0]
 
-# Adding bases data
-bases = re.compile("(\d+)(?=\s*bases)")
-metricsJson["bases"] = bases.findall(data)[0]
+    # Adding contamination data (formatted to 2 decimal places)
+    contamination = re.compile("(\d\.\d+)(?=\s*%)")
+    metricsJson["phiX_contamination"] = float("{:.4}".format(contamination.findall(data)[0]))
 
-# Adding contamination data (formatted to 2 decimal places)
-contamination = re.compile("(\d\.\d+)(?=\s*%)")
-metricsJson["phiX_contamination"] = float("{:.4}".format(contamination.findall(data)[0]))
+    # Write dictionary out to JSON file
+    out = open("data.json","w")
+    json.dump(metricsJson, out)
+    out.close()
 
-# Write dictionary out to JSON file
-out = open("data.json","w")
-json.dump(metricsJson, out)
-out.close()
-
-CODE
-
+    CODE
   >>>
 
   output {
