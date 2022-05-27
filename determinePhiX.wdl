@@ -6,19 +6,22 @@ workflow determinePhiX {
     Array[Int] lanes
     String basesMask
     String outputFileNamePrefix
+    File sampleSheet
   }
 
   call generateFastqs {
     input:
       runDirectory = runDirectory,
       lanes = lanes,
-      basesMask = basesMask
+      basesMask = basesMask,
+      outputFileNamePrefix = outputFileNamePrefix
   }
 
-  call getPhiXData {
+  call generatePhixFastqs {
     input:
-      read1 = generateFastqs.read1,
-      read2 = generateFastqs.read2,
+      runDirectory = runDirectory,
+      lanes = lanes,
+      sampleSheet = sampleSheet,
       outputFileNamePrefix = outputFileNamePrefix
   }
 
@@ -27,17 +30,21 @@ workflow determinePhiX {
       input:
         fastqSingleRead = read.right,
         read = read.left,
+        lanes = lanes,
+        phixReadsStats = generatePhixFastqs.phixReadsStats,
         outputFileNamePrefix = outputFileNamePrefix
     }
   }
 
   call formatData {
     input:
-      data = getPhiXData.data
+      data = getPhiXData.data,
+      outputFileNamePrefix = outputFileNamePrefix
   }
 
   output {
     File metricsJson = formatData.metrics
+    File phixReadsStats = generatePhixFastqs.phixReadsStats
   }
 
   parameter_meta {
@@ -65,9 +72,6 @@ workflow determinePhiX {
       }
     ]
     output_meta: {
-      matchedRead1: "Read 1 with contaminated bases removed",
-      matchedRead2: "Read 2 with contaminated bases removed",
-      dataFile: "All output data contained in TXT file",
       metricsJson: "Contamination data contained in a JSON file"
     }
   }
@@ -78,10 +82,12 @@ task generateFastqs {
     String runDirectory
     Array[Int] lanes
     String basesMask
+    String outputFileNamePrefix
     String bcl2fastq = "bcl2fastq"
     String modules = "bcl2fastq/2.20.0.422"
     Int mem = 32
     Int timeout = 6
+    Int threads = 8
   }
 
   String outputDirectory = "out"
@@ -111,6 +117,7 @@ task generateFastqs {
     memory: "~{mem} GB"
     modules: "~{modules}"
     timeout: "~{timeout}"
+    threads: "{threads}"
   }
 
   parameter_meta {
@@ -125,8 +132,70 @@ task generateFastqs {
 
   meta {
     output_meta: {
-      read1: "Read 1 fastq.gz.",
-      read2: "Read 2 fastq.gz."
+      reads: "An array of fastq files with the read number associated with it"
+    }
+  }
+}
+
+task generatePhixFastqs {
+  input {
+    String runDirectory
+    Array[Int] lanes
+    String outputFileNamePrefix
+    File sampleSheet
+    String bcl2fastq = "bcl2fastq"
+    String modules = "bcl2fastq/2.20.0.422"
+    Int mem = 32
+    Int timeout = 6
+    Int threads = 8
+  }
+
+  String outputDirectory = "out"
+
+  command <<<
+    ~{bcl2fastq} \
+    --runfolder-dir "~{runDirectory}" \
+    --processing-threads 8 \
+    --output-dir "~{outputDirectory}" \
+    --create-fastq-for-index-reads \
+    --sample-sheet "~{sampleSheet}" \
+    --tiles "s_[~{sep='' lanes}]" \
+    --use-bases-mask y*,i*,i*,y* \
+    --no-lane-splitting \
+    --interop-dir "~{outputDirectory}/Interop"
+
+    mv ~{outputDirectory}/PHIXTEST_S1_R1_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIXTEST_S1_R1_001.fastq.gz
+    mv ~{outputDirectory}/PHIXTEST_S1_R2_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIXTEST_S1_R2_001.fastq.gz
+
+    grep -B 1 "Cluster" ~{outputDirectory}/Stats/Stats.json > ~{outputFileNamePrefix}_phix_reads_data.txt
+    grep -A 3 "MismatchCounts" "~{outputDirectory}"/Stats/Stats.json >> ~{outputFileNamePrefix}_phix_reads_data.txt
+
+  >>>
+
+  output {
+    Array[Pair[String, File]] reads = [("1","~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R1_001.fastq.gz"),("2","~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R2_001.fastq.gz")]
+    File phixReadsStats = "~{outputFileNamePrefix}_phix_reads_data.txt"
+  }
+
+  runtime {
+    memory: "~{mem} GB"
+    modules: "~{modules}"
+    timeout: "~{timeout}"
+    threads: "{threads}"
+  }
+
+  parameter_meta {
+    runDirectory: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE)."
+    lanes: "A single lane or a list of lanes for no lane splitting (merging lanes)."
+    bcl2fastq: "bcl2fastq binary name or path to bcl2fastq."
+    modules: "Environment module name and version to load (space separated) before command execution."
+    mem: "Memory (in GB) to allocate to the job."
+    timeout: "Maximum amount of time (in hours) the task can run for."
+  }
+
+  meta {
+    output_meta: {
+      reads: "An array of fastq files with the read number associated with it"
     }
   }
 }
@@ -136,6 +205,8 @@ task getPhiXData {
     File fastqSingleRead
     String read
     String outputFileNamePrefix
+    Array[Int] lanes
+    File phixReadsStats
     String modules = "bbmap/38.75"
     Int mem = 32
     Int timeout = 6
@@ -153,6 +224,8 @@ task getPhiXData {
 
   echo "read=~{read}" > ~{outputFileNamePrefix}_data.txt
   echo "sequencing_run=~{outputFileNamePrefix}" >> ~{outputFileNamePrefix}_data.txt
+  echo "lanes=~{sep=',' lanes}" >> ~{outputFileNamePrefix}_data.txt
+  cat ~{phixReadsStats} >> ~{outputFileNamePrefix}_data.txt
   cat stderr >>  ~{outputFileNamePrefix}_data.txt
 
   >>>
@@ -189,6 +262,7 @@ task formatData {
   input {
     Array[File] data
     String modules = ""
+    String outputFileNamePrefix
     Int mem = 32
     Int timeout = 6
   }
@@ -199,24 +273,41 @@ task formatData {
     import re
     import json
 
-    with open(r'~{data[0]}') as f:
-        lines = f.readlines()
+    with open(r'~{data[0]}') as f1:
+        lines_f1 = f1.readlines()
 
-    # Create dictionary with contamination data
+    with open(r'~{data[1]}') as f2:
+        lines_f2 = f2.readlines()
+
+    # Create dictionary for json file
     metricsJson = {}
+    metricsJson["sequencing_run"] = lines_f1[1].split("=")[1].strip()
+    metricsJson["lanes"] = lines_f1[2].split("=")[1].strip()
+    metricsJson["read_1"] = {}
+    metricsJson["read_2"] = {}
 
-    for line in lines:
-        line_split = line.split("\t")
-        if "Reads Used" in line:
-            metricsJson["total_reads"] = line_split[1]
-            metricsJson["total_bases"] = line_split[2].split(" ")[0][1:]
+    for file in [lines_f1, lines_f2]:
+        d = {}
+        for line in file:
 
-        if "mapped" in line:
-            metricsJson["pct_reads_align_phiX"] = round(float(line_split[1].strip()[:-1]),2)
-            metricsJson["number_reads_align_phiX"] = line_split[2].strip()
+            line_split = line.split("\t")
+            if "Reads Used" in line:
+                d["total_reads"] = line_split[1]
+                d["total_bases"] = line_split[2].split(" ")[0][1:]
+
+            if "mapped" in line:
+                d["pct_reads_align_phiX"] = round(float(line_split[1].strip()[:-1]),2)
+                d["number_reads_align_phiX"] = line_split[2].strip()
+
+        if file[0].strip() == "read=1":
+            metricsJson["read_1"] = d
+        elif file[0].strip() == "read=2":
+            metricsJson["read_2"] = d
+
+    print(metricsJson)
 
     #Write dictionary out to JSON file
-    out = open("data.json","w")
+    out = open("~{outputFileNamePrefix}_data.json","w")
     json.dump(metricsJson, out)
     out.close()
 
@@ -224,7 +315,7 @@ task formatData {
   >>>
 
   output {
-    File metrics = "data.json"
+    File metrics = "~{outputFileNamePrefix}_data.json"
   }
 
   runtime {
