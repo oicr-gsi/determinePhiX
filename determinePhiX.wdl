@@ -5,7 +5,7 @@ import "imports/fastqc.wdl" as fastqc
 workflow determinePhiX {
   input {
     String runDirectory
-    Array[Int] lanes
+    String lane
     String basesMask
     String outputFileNamePrefix
     File sampleSheet
@@ -14,7 +14,7 @@ workflow determinePhiX {
   call generateFastqs {
     input:
       runDirectory = runDirectory,
-      lanes = lanes,
+      lane = lane,
       basesMask = basesMask,
       outputFileNamePrefix = outputFileNamePrefix
   }
@@ -29,7 +29,7 @@ workflow determinePhiX {
   call generatePhixFastqs {
     input:
       runDirectory = runDirectory,
-      lanes = lanes,
+      lane = lane,
       sampleSheet = sampleSheet,
       outputFileNamePrefix = outputFileNamePrefix
   }
@@ -61,7 +61,7 @@ workflow determinePhiX {
       description: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE).",
       vidarr_type: "directory"
     }
-    lanes: "A single lane or a list of lanes for no lane splitting (merging lanes)."
+    lane: "A single lane to get metrics from."
     basesMask: "The bases mask to produce the index reads (e.g. single 8bp index = \"Y1N*,I8,N*\", dual 8bp index = \"Y1N*,I8,I8,N*\")."
     outputFileNamePrefix: "Output prefix to prefix output file names with."
   }
@@ -89,7 +89,7 @@ workflow determinePhiX {
 task generateFastqs {
   input {
     String runDirectory
-    Array[Int] lanes
+    String lane
     String basesMask
     String outputFileNamePrefix
     String bcl2fastq = "bcl2fastq"
@@ -109,7 +109,7 @@ task generateFastqs {
     --output-dir "~{outputDirectory}" \
     --create-fastq-for-index-reads \
     --sample-sheet "/dev/null" \
-    --tiles "s_[~{sep='' lanes}]" \
+    --tiles "s_[~{lane}]" \
     --use-bases-mask "~{basesMask}" \
     --no-lane-splitting \
     --interop-dir "~{outputDirectory}/Interop"
@@ -133,7 +133,7 @@ task generateFastqs {
 
   parameter_meta {
     runDirectory: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE)."
-    lanes: "A single lane or a list of lanes for no lane splitting (merging lanes)."
+    lane: "A single lane to produce fastqs from."
     basesMask: "The bases mask to produce the index reads (e.g. single 8bp index = \"Y1N*,I8,N*\", dual 8bp index = \"Y1N*,I8,I8,N*\")."
     bcl2fastq: "bcl2fastq binary name or path to bcl2fastq."
     modules: "Environment module name and version to load (space separated) before command execution."
@@ -151,7 +151,7 @@ task generateFastqs {
 task generatePhixFastqs {
   input {
     String runDirectory
-    Array[Int] lanes
+    String lane
     String outputFileNamePrefix
     File sampleSheet
     String bcl2fastq = "bcl2fastq"
@@ -170,7 +170,7 @@ task generatePhixFastqs {
     --output-dir "~{outputDirectory}" \
     --create-fastq-for-index-reads \
     --sample-sheet "~{sampleSheet}" \
-    --tiles "s_[~{sep='' lanes}]" \
+    --tiles "s_[~{lane}]" \
     --use-bases-mask y*,i*,i*,y* \
     --no-lane-splitting \
     --interop-dir "~{outputDirectory}/Interop"
@@ -193,7 +193,7 @@ task generatePhixFastqs {
 
   parameter_meta {
     runDirectory: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE)."
-    lanes: "A single lane or a list of lanes for no lane splitting (merging lanes)."
+    lane: "A single lane to get fastqs from."
     bcl2fastq: "bcl2fastq binary name or path to bcl2fastq."
     modules: "Environment module name and version to load (space separated) before command execution."
     mem: "Memory (in GB) to allocate to the job."
