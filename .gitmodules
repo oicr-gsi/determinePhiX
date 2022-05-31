@@ -1,0 +1,3 @@
+[submodule "subworkflows/fastqc"]
+	path = subworkflows/fastqc
+	url = git@github.com:oicr-gsi/fastqc.git

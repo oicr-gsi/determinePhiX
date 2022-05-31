@@ -1,5 +1,7 @@
 version 1.0
 
+import "imports/fastqc.wdl" as fastqc
+
 workflow determinePhiX {
   input {
     String runDirectory
@@ -14,6 +16,13 @@ workflow determinePhiX {
       runDirectory = runDirectory,
       lanes = lanes,
       basesMask = basesMask,
+      outputFileNamePrefix = outputFileNamePrefix
+  }
+
+  call fastqc.fastQC {
+    input:
+      fastqR1 = generateFastqs.read1,
+      fastqR2 = generateFastqs.read2,
       outputFileNamePrefix = outputFileNamePrefix
   }
 
@@ -45,6 +54,8 @@ workflow determinePhiX {
   output {
     File metricsJson = formatData.metrics
     File phixReadsStats = generatePhixFastqs.phixReadsStats
+    File fastqcResultsR1 = fastQC.zip_bundle_R1
+    File? fastqcResultsR2 = fastQC.zip_bundle_R2
   }
 
   parameter_meta {
