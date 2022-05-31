@@ -39,8 +39,6 @@ workflow determinePhiX {
       input:
         fastqSingleRead = read.right,
         read = read.left,
-        lanes = lanes,
-        phixReadsStats = generatePhixFastqs.phixReadsStats,
         outputFileNamePrefix = outputFileNamePrefix
     }
   }
@@ -48,12 +46,12 @@ workflow determinePhiX {
   call formatData {
     input:
       data = getPhiXData.data,
+      phixReadsStats = generatePhixFastqs.phixStats,
       outputFileNamePrefix = outputFileNamePrefix
   }
 
   output {
     File metricsJson = formatData.metrics
-    File phixReadsStats = generatePhixFastqs.phixReadsStats
     File fastqcResultsR1 = fastQC.zip_bundle_R1
     File? fastqcResultsR2 = fastQC.zip_bundle_R2
   }
@@ -121,6 +119,8 @@ task generateFastqs {
   >>>
 
   output {
+    File read1 = "~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R1_001.fastq.gz"
+    File read2 = "~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R2_001.fastq.gz"
     Array[Pair[String, File]] reads = [("1","~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R1_001.fastq.gz"),("2","~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R2_001.fastq.gz")]
   }
 
@@ -175,17 +175,13 @@ task generatePhixFastqs {
     --no-lane-splitting \
     --interop-dir "~{outputDirectory}/Interop"
 
-    mv ~{outputDirectory}/PHIXTEST_S1_R1_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIXTEST_S1_R1_001.fastq.gz
-    mv ~{outputDirectory}/PHIXTEST_S1_R2_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIXTEST_S1_R2_001.fastq.gz
-
-    grep -B 1 "Cluster" ~{outputDirectory}/Stats/Stats.json > ~{outputFileNamePrefix}_phix_reads_data.txt
-    grep -A 3 "MismatchCounts" "~{outputDirectory}"/Stats/Stats.json >> ~{outputFileNamePrefix}_phix_reads_data.txt
-
+    mv ~{outputDirectory}/PHIX_0001_S1_R1_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R1_001.fastq.gz
+    mv ~{outputDirectory}/PHIX_0001_S1_R2_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R2_001.fastq.gz
   >>>
 
   output {
-    Array[Pair[String, File]] reads = [("1","~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R1_001.fastq.gz"),("2","~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R2_001.fastq.gz")]
-    File phixReadsStats = "~{outputFileNamePrefix}_phix_reads_data.txt"
+    Array[Pair[String, File]] reads = [("1","~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R1_001.fastq.gz"),("2","~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R2_001.fastq.gz")]
+    File phixStats = "~{outputDirectory}/Stats/Stats.json"
   }
 
   runtime {
@@ -216,8 +212,6 @@ task getPhiXData {
     File fastqSingleRead
     String read
     String outputFileNamePrefix
-    Array[Int] lanes
-    File phixReadsStats
     String modules = "bbmap/38.75"
     Int mem = 32
     Int timeout = 6
@@ -234,9 +228,6 @@ task getPhiXData {
   nodisk -Xmx32g
 
   echo "read=~{read}" > ~{outputFileNamePrefix}_data.txt
-  echo "sequencing_run=~{outputFileNamePrefix}" >> ~{outputFileNamePrefix}_data.txt
-  echo "lanes=~{sep=',' lanes}" >> ~{outputFileNamePrefix}_data.txt
-  cat ~{phixReadsStats} >> ~{outputFileNamePrefix}_data.txt
   cat stderr >>  ~{outputFileNamePrefix}_data.txt
 
   >>>
@@ -274,6 +265,7 @@ task formatData {
     Array[File] data
     String modules = ""
     String outputFileNamePrefix
+    File phixReadsStats
     Int mem = 32
     Int timeout = 6
   }
@@ -290,10 +282,24 @@ task formatData {
     with open(r'~{data[1]}') as f2:
         lines_f2 = f2.readlines()
 
+    stats_file = open("~{phixReadsStats}")
+    data = json.load(stats_file)
+
     # Create dictionary for json file
     metricsJson = {}
-    metricsJson["sequencing_run"] = lines_f1[1].split("=")[1].strip()
-    metricsJson["lanes"] = lines_f1[2].split("=")[1].strip()
+    metricsJson["RunId"] = data["RunId"]
+    metricsJson["LaneNumber"] = data["ConversionResults"][0]["LaneNumber"]
+    metricsJson["TotalClustersPF"] = data["ConversionResults"][0]["TotalClustersPF"]
+    #print("TotalClustersRaw ", data["ConversionResults"][0]["TotalClustersRaw"])
+
+    #phix reads
+    metricsJson["phixReads"] = {}
+    metricsJson["phixReads"]["MismatchCounts"] = data["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["MismatchCounts"]
+    metricsJson["phixReads"]["IndexSequence"] = data["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["IndexSequence"]
+    metricsJson["phixReads"]["NumberofReads"] = data["ConversionResults"][0]["DemuxResults"][0]["NumberReads"]
+    #print(data["ConversionResults"][0]["DemuxResults"][0])
+
+    #get metrics for each read
     metricsJson["read_1"] = {}
     metricsJson["read_2"] = {}
 
@@ -314,8 +320,6 @@ task formatData {
             metricsJson["read_1"] = d
         elif file[0].strip() == "read=2":
             metricsJson["read_2"] = d
-
-    print(metricsJson)
 
     #Write dictionary out to JSON file
     out = open("~{outputFileNamePrefix}_data.json","w")
