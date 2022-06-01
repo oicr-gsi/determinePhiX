@@ -65,9 +65,9 @@ workflow determinePhiX {
   }
 
   meta {
-    author: "Murto Hilali & Michael Laszloffy"
-    email: "murto.hilali@oicr.on.ca OR michael.laszloffy@oicr.on.ca"
-    description: "Workflow to determine PhiX contamination of undetermined reads"
+    author: "Murto Hilali & Michael Laszloffy, updated by Beatriz Lujan"
+    email: "michael.laszloffy@oicr.on.ca, beatriz.lujantoro@oicr.on.ca"
+    description: "Workflow to determine PhiX content of a sequencing run lane, by alignment of PhiX reference genome to undetermined reads and using the PhiX indices to pull PhiX reads, also runs fastQC on undetermined reads."
     dependencies: [
       {
         name: "bcl2fastq/2.20.0.422",
@@ -79,7 +79,9 @@ workflow determinePhiX {
       }
     ]
     output_meta: {
-      metricsJson: "Contamination data contained in a JSON file"
+      metricsJson: "Collection of metrics for the sequencing run and PhiX content in JSON file.",
+      fastqcResultsR1: "FastQC results for undetermined reads 1, zipped.",
+      fastqcResultsR2: "FastQC results for undetermined reads 2, zipped."
     }
   }
 }
@@ -90,7 +92,6 @@ task generateFastqs {
     String lane
     String basesMask
     String outputFileNamePrefix
-    String bcl2fastq = "bcl2fastq"
     String modules = "bcl2fastq/2.20.0.422"
     Int mem = 32
     Int timeout = 6
@@ -100,7 +101,7 @@ task generateFastqs {
   String outputDirectory = "out"
 
   command <<<
-    ~{bcl2fastq} \
+    bcl2fastq \
     --runfolder-dir "~{runDirectory}" \
     --intensities-dir "~{runDirectory}/Data/Intensities/" \
     --processing-threads 8 \
@@ -134,7 +135,7 @@ task generateFastqs {
     runDirectory: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE)."
     lane: "A single lane to produce fastqs from."
     basesMask: "The bases mask to produce the index reads (e.g. single 8bp index = \"Y1N*,I8,N*\", dual 8bp index = \"Y1N*,I8,I8,N*\")."
-    bcl2fastq: "bcl2fastq binary name or path to bcl2fastq."
+    outputFileNamePrefix: "Prefix to name output files."
     modules: "Environment module name and version to load (space separated) before command execution."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
@@ -142,7 +143,9 @@ task generateFastqs {
 
   meta {
     output_meta: {
-      reads: "An array of fastq files with the read number associated with it"
+      reads: "An array of fastq files with the read number associated with it.",
+      read1: "Undetermined fastq reads 1.",
+      read2: "Undetermined fastq reads 2."
     }
   }
 }
@@ -152,7 +155,6 @@ task generatePhixFastqs {
     String runDirectory
     String lane
     String outputFileNamePrefix
-    String bcl2fastq = "bcl2fastq"
     String modules = "bcl2fastq/2.20.0.422"
     Int mem = 32
     Int timeout = 6
@@ -174,7 +176,7 @@ task generatePhixFastqs {
     echo PHIX,PHIX_0001,PhiX Adapter,GGGGGGGG,PhiX Adapter,AGATCTCG >> SampleSheet.csv
 
     #run bcl2fastq using sample sheet created above
-    ~{bcl2fastq} \
+    bcl2fastq \
     --runfolder-dir "~{runDirectory}" \
     --processing-threads 8 \
     --output-dir "~{outputDirectory}" \
@@ -191,7 +193,6 @@ task generatePhixFastqs {
   >>>
 
   output {
-    Array[Pair[String, File]] reads = [("1","~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R1_001.fastq.gz"),("2","~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R2_001.fastq.gz")]
     File phixStats = "~{outputDirectory}/Stats/Stats.json"
   }
 
@@ -205,7 +206,7 @@ task generatePhixFastqs {
   parameter_meta {
     runDirectory: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE)."
     lane: "A single lane to get fastqs from."
-    bcl2fastq: "bcl2fastq binary name or path to bcl2fastq."
+    outputFileNamePrefix: "Prefix to name output files."
     modules: "Environment module name and version to load (space separated) before command execution."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
@@ -213,7 +214,7 @@ task generatePhixFastqs {
 
   meta {
     output_meta: {
-      reads: "An array of fastq files with the read number associated with it"
+      phixStats: "bcl2fastq stats for PhiX reads."
     }
   }
 }
@@ -255,7 +256,9 @@ task getPhiXData {
   }
 
   parameter_meta {
-    fastqSingleRead: "Undetermined read 1 from bcl2fastq"
+    fastqSingleRead: "Undetermined read from bcl2fastq"
+    read: "Indicates the read number passed to bbmap, either 1 or 2."
+    outputFileNamePrefix: "Prefix to name output files."
     modules: "Environment module name and version to load (space separated) before command execution."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
@@ -265,7 +268,7 @@ task getPhiXData {
 
   meta {
     output_meta: {
-      data: "File containing stdout from PhiX determination step"
+      data: "File containing ouput from alignment."
     }
   }
 
@@ -274,7 +277,6 @@ task getPhiXData {
 task formatData {
   input {
     Array[File] data
-    String modules = ""
     String outputFileNamePrefix
     File phixReadsStats
     Int mem = 32
@@ -345,21 +347,20 @@ task formatData {
 
   runtime {
     memory: "~{mem} GB"
-    modules: "~{modules}"
     timeout: "~{timeout}"
   }
 
   parameter_meta {
-    data: "File containing stdout from PhiX determination step"
-    modules: "Environment module name and version to load (space separated) before command execution."
+    data: "File containing output metrics from PhiX alignment."
+    phixReadsStats: "bcl2fastq stats for PhiX reads.."
+    outputFileNamePrefix: "Prefix to name output files."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
   }
 
   meta {
     output_meta: {
-      metrics: "Contamination data contained in a JSON file",
-      outputData: "All output data contained in TXT file"
+      metrics: "Contamination data contained in a JSON file."
     }
   }
 }
