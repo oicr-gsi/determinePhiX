@@ -1,165 +1,164 @@
 [
-    {
-        "description":"HiSeq test",
-        "engineArguments": {
-            "write_to_cache": false,
-            "read_from_cache": false
-        },
-        "id":"determinePhiX_HiSeqTest",
-        "metadata": {
-            "determinePhiX.metricsJson": {
-                "contents": [
-                    {
-                        "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_HiSeqTest_@JENKINSID@"
-                    }
-                ],
-                "type": "ALL"
-            },
-            "determinePhiX.dataFile": {
-                "contents": [
-                    {
-                        "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_HiSeqTest_@JENKINSID@"
-                    }
-                ],
-                "type": "ALL"
-            },
-            "determinePhiX.matchedRead1": {
-                "contents": [
-                    {
-                        "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_HiSeqTest_@JENKINSID@"
-                    }
-                ],
-                "type": "ALL"
-            },
-            "determinePhiX.matchedRead2": {
-                "contents": [
-                    {
-                        "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_HiSeqTest_@JENKINSID@"
-                    }
-                ],
-                "type": "ALL"
-            }
-        },
-        "arguments": {
-            "determinePhiX.outputFileNamePrefix": null,
-            "determinePhiX.generateFastqs.timeout": null,
-            "determinePhiX.getPhiXData.timeout": null,
-            "determinePhiX.generateFastqs.bcl2fastq": null,
-            "determinePhiX.generateFastqs.mem": null,
-            "determinePhiX.lanes": [
-                1,
-                2
-            ], 
-            "determinePhiX.formatData.timeout": null, 
-            "determinePhiX.getPhiXData.mem": null, 
-            "determinePhiX.getPhiXData.modules": null,  
-            "determinePhiX.formatData.mem": null,  
-            "determinePhiX.formatData.modules": null,  
-            "determinePhiX.basesMask": "y*,n*,y*",  
-            "determinePhiX.runDirectory": {
-                "contents": {
-                    "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
-                    "externalIds": [
-                        {
-                            "id": "TEST",
-                            "provider": "TEST"
-                        }
-                    ]
-                },
-                "type": "EXTERNAL"
-            }, 
-            "determinePhiX.generateFastqs.modules": null
-
-        },
-        "validators": [
+  {
+    "id":"determinePhiX_HiSeqTest",
+    "description":"HiSeq test",
+    "arguments": {
+      "determinePhiX.outputFileNamePrefix": null,
+      "determinePhiX.generateFastqs.timeout": null,
+      "determinePhiX.getPhiXData.timeout": null,
+      "determinePhiX.generateFastqs.bcl2fastq": null,
+      "determinePhiX.generateFastqs.mem": null,
+      "determinePhiX.lanes": [
+        1,
+        2
+      ],
+      "determinePhiX.formatData.timeout": null,
+      "determinePhiX.getPhiXData.mem": null,
+      "determinePhiX.getPhiXData.modules": null,
+      "determinePhiX.formatData.mem": null,
+      "determinePhiX.formatData.modules": null,
+      "determinePhiX.basesMask": "y*,n*,y*",
+      "determinePhiX.runDirectory": {
+        "contents": {
+          "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
+          "externalIds": [
             {
-                "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
-                "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/determinePhiX/metrics/HiSeqTest/output.metrics",
-                "type": "script"
+              "id": "TEST",
+              "provider": "TEST"
             }
-        ]
+          ]
+        },
+        "type": "EXTERNAL"
+      },
+      "determinePhiX.generateFastqs.modules": null
     },
-    {
-        "description":"NextSeq test",
-        "engineArguments": {
-            "write_to_cache": false,
-            "read_from_cache": false
-        },
-        "id":"determinePhiX_NextSeqTest",
-        "metadata": {
-            "determinePhiX.metricsJson": {
-                "contents": [
-                    {
-                        "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_NextSeqTest_@JENKINSID@"
-                    }
-                ],
-                "type": "ALL"
-            },
-            "determinePhiX.dataFile": {
-                "contents": [
-                    {
-                        "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_NextSeqTest_@JENKINSID@"
-                    }
-                ],
-                "type": "ALL"
-            },
-            "determinePhiX.matchedRead1": {
-                "contents": [
-                    {
-                        "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_NextSeqTest_@JENKINSID@"
-                    }
-                ],
-                "type": "ALL"
-            },
-            "determinePhiX.matchedRead2": {
-                "contents": [
-                    {
-                        "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_NextSeqTest_@JENKINSID@"
-                    }
-                ],
-                "type": "ALL"
-            }
-        },
-        "arguments": {
-            "determinePhiX.outputFileNamePrefix": null,
-            "determinePhiX.generateFastqs.timeout": null,
-            "determinePhiX.getPhiXData.timeout": null,
-            "determinePhiX.generateFastqs.bcl2fastq": null,
-            "determinePhiX.generateFastqs.mem": null,
-            "determinePhiX.lanes": [
-                1,
-                2,
-                3,
-                4
-            ], 
-            "determinePhiX.formatData.timeout": null, 
-            "determinePhiX.getPhiXData.mem": null, 
-            "determinePhiX.getPhiXData.modules": null,  
-            "determinePhiX.formatData.mem": null,  
-            "determinePhiX.formatData.modules": null,  
-            "determinePhiX.basesMask": "y*,n*,n*,y*",
-            "determinePhiX.runDirectory": {
-                "contents": {
-                    "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
-                    "externalIds": [
-                        {
-                            "id": "TEST",
-                            "provider": "TEST"
-                        }
-                    ]
-                },
-                "type": "EXTERNAL"
-            },  
-            "determinePhiX.generateFastqs.modules": null
-        },
-        "validators": [
+    "engineArguments": {
+      "write_to_cache": false,
+      "read_from_cache": false
+    },
+    "metadata": {
+      "determinePhiX.metricsJson": {
+        "contents": [
+          {
+            "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_HiSeqTest_@JENKINSID@"
+          }
+        ],
+        "type": "ALL"
+      },
+      "determinePhiX.dataFile": {
+        "contents": [
+          {
+            "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_HiSeqTest_@JENKINSID@"
+          }
+        ],
+        "type": "ALL"
+      },
+      "determinePhiX.matchedRead1": {
+        "contents": [
+          {
+            "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_HiSeqTest_@JENKINSID@"
+          }
+        ],
+        "type": "ALL"
+      },
+      "determinePhiX.matchedRead2": {
+        "contents": [
+          {
+            "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_HiSeqTest_@JENKINSID@"
+          }
+        ],
+        "type": "ALL"
+      }
+    },
+    "validators": [
+      {
+        "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
+        "metrics_compare": "@CHECKOUT@/tests/compare.sh",
+        "output_metrics": "/.mounts/labs/gsi/testdata/determinePhiX/metrics/HiSeqTest/output.metrics",
+        "type": "script"
+      }
+    ]
+  },
+  {
+    "id":"determinePhiX_NextSeqTest",
+    "description":"NextSeq test",
+    "arguments": {
+      "determinePhiX.outputFileNamePrefix": null,
+      "determinePhiX.generateFastqs.timeout": null,
+      "determinePhiX.getPhiXData.timeout": null,
+      "determinePhiX.generateFastqs.bcl2fastq": null,
+      "determinePhiX.generateFastqs.mem": null,
+      "determinePhiX.lanes": [
+        1,
+        2,
+        3,
+        4
+        ],
+      "determinePhiX.formatData.timeout": null,
+      "determinePhiX.getPhiXData.mem": null,
+      "determinePhiX.getPhiXData.modules": null,
+      "determinePhiX.formatData.mem": null,
+      "determinePhiX.formatData.modules": null,
+      "determinePhiX.basesMask": "y*,n*,n*,y*",
+      "determinePhiX.runDirectory": {
+        "contents": {
+          "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
+          "externalIds": [
             {
-                "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
-                "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/determinePhiX/metrics/NextSeqTest/output.metrics",
-                "type": "script"
+              "id": "TEST",
+              "provider": "TEST"
             }
-        ]
-    }
+          ]
+        },
+        "type": "EXTERNAL"
+      },
+      "determinePhiX.generateFastqs.modules": null
+    },
+    "engineArguments": {
+      "write_to_cache": false,
+      "read_from_cache": false
+    },
+    "metadata": {
+      "determinePhiX.metricsJson": {
+        "contents": [
+          {
+            "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_NextSeqTest_@JENKINSID@"
+          }
+        ],
+        "type": "ALL"
+      },
+      "determinePhiX.dataFile": {
+        "contents": [
+          {
+            "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_NextSeqTest_@JENKINSID@"
+          }
+        ],
+        "type": "ALL"
+      },
+      "determinePhiX.matchedRead1": {
+        "contents": [
+          {
+            "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_NextSeqTest_@JENKINSID@"
+          }
+        ],
+        "type": "ALL"
+      },
+      "determinePhiX.matchedRead2": {
+        "contents": [
+          {
+            "outputDirectory": "@SCRATCH@/@DATE@_Workflow_determinePhiX_determinePhiX_NextSeqTest_@JENKINSID@"
+          }
+        ],
+        "type": "ALL"
+      }
+    },
+    "validators": [
+      {
+        "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
+        "metrics_compare": "@CHECKOUT@/tests/compare.sh",
+        "output_metrics": "/.mounts/labs/gsi/testdata/determinePhiX/metrics/NextSeqTest/output.metrics",
+        "type": "script"
+      }
+    ]
+  }
 ]
