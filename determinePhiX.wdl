@@ -185,6 +185,7 @@ task generatePhixFastqs {
     --no-lane-splitting \
     --interop-dir "~{outputDirectory}/Interop"
 
+    #rename files to include run name
     mv ~{outputDirectory}/PHIX_0001_S1_R1_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R1_001.fastq.gz
     mv ~{outputDirectory}/PHIX_0001_S1_R2_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R2_001.fastq.gz
   >>>
@@ -297,17 +298,16 @@ task formatData {
 
     # Create dictionary for json file
     metricsJson = {}
-    metricsJson["RunId"] = data["RunId"]
-    metricsJson["LaneNumber"] = data["ConversionResults"][0]["LaneNumber"]
-    metricsJson["TotalClustersPF"] = data["ConversionResults"][0]["TotalClustersPF"]
+    metricsJson["run_id"] = data["RunId"]
+    metricsJson["lane_number"] = data["ConversionResults"][0]["LaneNumber"]
+    metricsJson["total_clusters"] = data["ConversionResults"][0]["TotalClustersPF"]
     #print("TotalClustersRaw ", data["ConversionResults"][0]["TotalClustersRaw"])
 
     #phix reads
-    metricsJson["phixReads"] = {}
-    metricsJson["phixReads"]["MismatchCounts"] = data["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["MismatchCounts"]
-    metricsJson["phixReads"]["IndexSequence"] = data["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["IndexSequence"]
-    metricsJson["phixReads"]["NumberofReads"] = data["ConversionResults"][0]["DemuxResults"][0]["NumberReads"]
-    #print(data["ConversionResults"][0]["DemuxResults"][0])
+    metricsJson["phix_reads"] = {}
+    metricsJson["phix_reads"]["index_sequence"] = data["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["IndexSequence"]
+    metricsJson["phix_reads"]["number_of_reads"] = data["ConversionResults"][0]["DemuxResults"][0]["NumberReads"]
+    metricsJson["phix_reads"]["mismatch_counts"] = data["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["MismatchCounts"]
 
     #get metrics for each read
     metricsJson["read_1"] = {}
