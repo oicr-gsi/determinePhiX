@@ -8,7 +8,6 @@ workflow determinePhiX {
     String lane
     String basesMask
     String outputFileNamePrefix
-    File sampleSheet
   }
 
   call generateFastqs {
@@ -30,7 +29,6 @@ workflow determinePhiX {
     input:
       runDirectory = runDirectory,
       lane = lane,
-      sampleSheet = sampleSheet,
       outputFileNamePrefix = outputFileNamePrefix
   }
 
@@ -114,6 +112,7 @@ task generateFastqs {
     --no-lane-splitting \
     --interop-dir "~{outputDirectory}/Interop"
 
+    #rename files to include run name
     mv ~{outputDirectory}/Undetermined_S0_R1_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R1_001.fastq.gz
     mv ~{outputDirectory}/Undetermined_S0_R2_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R2_001.fastq.gz
   >>>
@@ -153,7 +152,6 @@ task generatePhixFastqs {
     String runDirectory
     String lane
     String outputFileNamePrefix
-    File sampleSheet
     String bcl2fastq = "bcl2fastq"
     String modules = "bcl2fastq/2.20.0.422"
     Int mem = 32
@@ -164,12 +162,24 @@ task generatePhixFastqs {
   String outputDirectory = "out"
 
   command <<<
+    #create sample sheet for bcl2fastq with phiX indices
+    echo [Header],,,,, > SampleSheet.csv
+    echo Date,2022-05-26-04:00,,,, >> SampleSheet.csv
+    echo ,,,,, >> SampleSheet.csv
+    echo [Reads],,,,, >> SampleSheet.csv
+    echo 75,,,,, >> SampleSheet.csv
+    echo ,,,,, >> SampleSheet.csv
+    echo [Data],,,,, >> SampleSheet.csv
+    echo Sample_ID,Sample_Name,I7_Index_ID,index,I5_Index_ID,index2 >> SampleSheet.csv
+    echo PHIX,PHIX_0001,PhiX Adapter,GGGGGGGG,PhiX Adapter,AGATCTCG >> SampleSheet.csv
+
+    #run bcl2fastq using sample sheet created above
     ~{bcl2fastq} \
     --runfolder-dir "~{runDirectory}" \
     --processing-threads 8 \
     --output-dir "~{outputDirectory}" \
     --create-fastq-for-index-reads \
-    --sample-sheet "~{sampleSheet}" \
+    --sample-sheet SampleSheet.csv \
     --tiles "s_[~{lane}]" \
     --use-bases-mask y*,i*,i*,y* \
     --no-lane-splitting \
