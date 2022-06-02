@@ -22,6 +22,7 @@ workflow determinePhiX {
     input:
       fastqR1 = generateFastqs.read1,
       fastqR2 = generateFastqs.read2,
+      basesMask = basesMask,
       outputFileNamePrefix = outputFileNamePrefix
   }
 
@@ -154,6 +155,7 @@ task generatePhixFastqs {
   input {
     String runDirectory
     String lane
+    String basesMask
     String outputFileNamePrefix
     String modules = "bcl2fastq/2.20.0.422"
     Int mem = 32
