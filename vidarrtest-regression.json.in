@@ -3,21 +3,9 @@
     "id":"determinePhiX_HiSeqTest",
     "description":"HiSeq test",
     "arguments": {
-      "determinePhiX.outputFileNamePrefix": null,
-      "determinePhiX.generateFastqs.timeout": null,
-      "determinePhiX.getPhiXData.timeout": null,
-      "determinePhiX.generateFastqs.bcl2fastq": null,
-      "determinePhiX.generateFastqs.mem": null,
-      "determinePhiX.lanes": [
-        1,
-        2
-      ],
-      "determinePhiX.formatData.timeout": null,
-      "determinePhiX.getPhiXData.mem": null,
-      "determinePhiX.getPhiXData.modules": null,
-      "determinePhiX.formatData.mem": null,
-      "determinePhiX.formatData.modules": null,
       "determinePhiX.basesMask": "y*,n*,y*",
+      "determinePhiX.outputFileNamePrefix": "150928_SN346_0594_AHCTWGBCXX",
+      "determinePhiX.lane": "1",
       "determinePhiX.runDirectory": {
         "contents": {
           "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
@@ -30,7 +18,20 @@
         },
         "type": "EXTERNAL"
       },
+      "determinePhiX.formatData.mem": null,
+      "determinePhiX.formatData.timeout": null,
+      "determinePhiX.generateFastqs.timeout": null,
       "determinePhiX.generateFastqs.modules": null
+      "determinePhiX.generateFastqs.mem": null,
+      "determinePhiX.generateFastqs.threads": null,
+      "determinePhiX.generatePhixFastqs.timeout": null,
+      "determinePhiX.generatePhixFastqs.modules": null
+      "determinePhiX.generatePhixFastqs.mem": null,
+      "determinePhiX.generatePhixFastqs.threads": null,
+      "determinePhiX.getPhiXData.timeout": null,
+      "determinePhiX.getPhiXData.mem": null,
+      "determinePhiX.getPhiXData.modules": null,
+      "determinePhiX.getPhiXData.threads": null
     },
     "engineArguments": {
       "write_to_cache": false,
@@ -83,23 +84,9 @@
     "id":"determinePhiX_NextSeqTest",
     "description":"NextSeq test",
     "arguments": {
-      "determinePhiX.outputFileNamePrefix": null,
-      "determinePhiX.generateFastqs.timeout": null,
-      "determinePhiX.getPhiXData.timeout": null,
-      "determinePhiX.generateFastqs.bcl2fastq": null,
-      "determinePhiX.generateFastqs.mem": null,
-      "determinePhiX.lanes": [
-        1,
-        2,
-        3,
-        4
-        ],
-      "determinePhiX.formatData.timeout": null,
-      "determinePhiX.getPhiXData.mem": null,
-      "determinePhiX.getPhiXData.modules": null,
-      "determinePhiX.formatData.mem": null,
-      "determinePhiX.formatData.modules": null,
       "determinePhiX.basesMask": "y*,n*,n*,y*",
+      "determinePhiX.outputFileNamePrefix": "150114_NS500141_0187_AH2GN7AFXX",
+      "determinePhiX.lane": "1",
       "determinePhiX.runDirectory": {
         "contents": {
           "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
@@ -112,7 +99,20 @@
         },
         "type": "EXTERNAL"
       },
-      "determinePhiX.generateFastqs.modules": null
+      "determinePhiX.formatData.timeout": null,
+      "determinePhiX.formatData.mem": null,
+      "determinePhiX.generateFastqs.timeout": null,
+      "determinePhiX.generateFastqs.mem": null,
+      "determinePhiX.generateFastqs.modules": null,
+      "determinePhiX.generateFastqs.threads": null,
+      "determinePhiX.generatePhixFastqs.timeout": null,
+      "determinePhiX.generatePhixFastqs.modules": null,
+      "determinePhiX.generatePhixFastqs.mem": null,
+      "determinePhiX.generatePhixFastqs.threads": null,
+      "determinePhiX.getPhiXData.timeout": null,
+      "determinePhiX.getPhiXData.mem": null,
+      "determinePhiX.getPhiXData.modules": null,
+      "determinePhiX.getPhiXData.threads": null
     },
     "engineArguments": {
       "write_to_cache": false,
