@@ -183,7 +183,7 @@ task generatePhixFastqs {
     --create-fastq-for-index-reads \
     --sample-sheet SampleSheet.csv \
     --tiles "s_[~{lane}]" \
-    --use-bases-mask y*,i*,i*,y* \
+    --use-bases-mask "~{basesMask}" \
     --no-lane-splitting \
     --interop-dir "~{outputDirectory}/Interop"
 
