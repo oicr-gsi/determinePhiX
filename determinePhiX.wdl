@@ -22,7 +22,6 @@ workflow determinePhiX {
     input:
       fastqR1 = generateFastqs.read1,
       fastqR2 = generateFastqs.read2,
-      basesMask = basesMask,
       outputFileNamePrefix = outputFileNamePrefix
   }
 
@@ -30,6 +29,7 @@ workflow determinePhiX {
     input:
       runDirectory = runDirectory,
       lane = lane,
+      basesMask = basesMask,
       outputFileNamePrefix = outputFileNamePrefix
   }
 
