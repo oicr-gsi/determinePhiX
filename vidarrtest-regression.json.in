@@ -21,7 +21,7 @@
       "determinePhiX.formatData.mem": null,
       "determinePhiX.formatData.timeout": null,
       "determinePhiX.generateFastqs.timeout": null,
-      "determinePhiX.generateFastqs.modules": null
+      "determinePhiX.generateFastqs.modules": null,
       "determinePhiX.generateFastqs.mem": null,
       "determinePhiX.generateFastqs.threads": null,
       "determinePhiX.generatePhixFastqs.timeout": null,
