@@ -1,6 +1,6 @@
 version 1.0
 
-import "imports/fastqc.wdl" as fastqc
+import "imports/fastqc.wdl" as fastQC
 
 workflow determinePhiX {
   input {
@@ -18,7 +18,7 @@ workflow determinePhiX {
       outputFileNamePrefix = outputFileNamePrefix
   }
 
-  call fastqc.fastQC {
+  call fastQC.fastQC {
     input:
       fastqR1 = generateFastqs.read1,
       fastqR2 = generateFastqs.read2,
