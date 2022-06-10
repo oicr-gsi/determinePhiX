@@ -18,8 +18,11 @@
         },
         "type": "EXTERNAL"
       },
+      "determinePhiX.phiXindices": null,
       "determinePhiX.formatData.mem": null,
       "determinePhiX.formatData.timeout": null,
+      "determinePhiX.formatPhiXdata.mem": null,
+      "determinePhiX.formatPhiXdata.timeout": null,
       "determinePhiX.generateFastqs.timeout": null,
       "determinePhiX.generateFastqs.modules": null,
       "determinePhiX.generateFastqs.mem": null,
@@ -99,8 +102,14 @@
         },
         "type": "EXTERNAL"
       },
+      "determinePhiX.phiXindices": [
+        "GGGGGGGG",
+        "AGATCTCG"
+      ],
       "determinePhiX.formatData.timeout": null,
       "determinePhiX.formatData.mem": null,
+      "determinePhiX.formatPhiXdata.mem": null,
+      "determinePhiX.formatPhiXdata.timeout": null,
       "determinePhiX.generateFastqs.timeout": null,
       "determinePhiX.generateFastqs.mem": null,
       "determinePhiX.generateFastqs.modules": null,
