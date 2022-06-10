@@ -28,7 +28,7 @@
       "determinePhiX.generateFastqs.mem": null,
       "determinePhiX.generateFastqs.threads": null,
       "determinePhiX.generatePhixFastqs.timeout": null,
-      "determinePhiX.generatePhixFastqs.modules": null
+      "determinePhiX.generatePhixFastqs.modules": null,
       "determinePhiX.generatePhixFastqs.mem": null,
       "determinePhiX.generatePhixFastqs.threads": null,
       "determinePhiX.getPhiXData.timeout": null,
