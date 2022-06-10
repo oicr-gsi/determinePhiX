@@ -75,6 +75,7 @@ workflow determinePhiX {
     lane: "A single lane to get metrics from."
     basesMask: "The bases mask to produce the index reads (e.g. single 8bp index = \"Y1N*,I8,N*\", dual 8bp index = \"Y1N*,I8,I8,N*\")."
     outputFileNamePrefix: "Output prefix to prefix output file names with."
+    phiXindices: "List of PhiX index or indices to generate PhiX fastqs as additional method to estimate PhiX content, eg. [\"GGGGGGGG\", \"AGATCTCG\"] (Optional)."
   }
 
   meta {
@@ -233,6 +234,7 @@ task generatePhixFastqs {
     runDirectory: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE)."
     lane: "A single lane to get fastqs from."
     outputFileNamePrefix: "Prefix to name output files."
+    phiXindices: "List of PhiX index or indices to generate PhiX fastqs as additional method to estimate PhiX content."
     modules: "Environment module name and version to load (space separated) before command execution."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
