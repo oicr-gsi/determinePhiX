@@ -52,8 +52,17 @@ workflow determinePhiX {
         phiXindices = indices,
         outputFileNamePrefix = outputFileNamePrefix
     }
+
+    call formatPhiXdata {
+      input:
+        phixReadsStats = generatePhixFastqs.phixStats,
+        data = formatData.metrics,
+        outputFileNamePrefix = outputFileNamePrefix
+    }
+  }
+
   output {
-    File metricsJson = formatData.metrics
+    File metricsJson = select_first([formatPhiXdata.metrics,formatData.metrics])
     File fastqcResultsR1 = fastQC.zip_bundle_R1
     File? fastqcResultsR2 = fastQC.zip_bundle_R2
   }
@@ -178,10 +187,19 @@ task generatePhixFastqs {
     echo ,,,,, >> SampleSheet.csv
     echo [Reads],,,,, >> SampleSheet.csv
     echo 75,,,,, >> SampleSheet.csv
+    echo 75,,,, >> SampleSheet.csv
     echo ,,,,, >> SampleSheet.csv
     echo [Data],,,,, >> SampleSheet.csv
-    echo Sample_ID,Sample_Name,I7_Index_ID,index,I5_Index_ID,index2 >> SampleSheet.csv
-    echo PHIX,PHIX_0001,PhiX Adapter,GGGGGGGG,PhiX Adapter,AGATCTCG >> SampleSheet.csv
+
+    if [ "~{indexTotal}" -eq 1 ]; then
+      echo Sample_ID,Sample_Name,I7_Index_ID >> SampleSheet.csv
+      echo PHIX,PHIX_0001,PhiX Adapter,"~{phiXindices[0]}" >> SampleSheet.csv
+    fi
+
+    if [ "~{indexTotal}" -eq 2 ]; then
+      echo Sample_ID,Sample_Name,I7_Index_ID,index,I5_Index_ID,index2 >> SampleSheet.csv
+      echo PHIX,PHIX_0001,PhiX Adapter,"~{phiXindices[0]}",PhiX Adapter,"~{phiXindices[1]}" >> SampleSheet.csv
+    fi
 
     #run bcl2fastq using sample sheet created above
     bcl2fastq \
@@ -279,7 +297,6 @@ task getPhiXData {
       data: "File containing ouput from alignment."
     }
   }
-
 }
 
 task formatData {
@@ -287,7 +304,7 @@ task formatData {
     Array[File] data
     File stats
     String outputFileNamePrefix
-    Int mem = 32
+    Int mem = 12
     Int timeout = 6
   }
 
@@ -354,6 +371,68 @@ task formatData {
 
   parameter_meta {
     data: "File containing output metrics from PhiX alignment."
+    outputFileNamePrefix: "Prefix to name output files."
+    stats: "Sequencing stats from the generateFastqs task."
+    mem: "Memory (in GB) to allocate to the job."
+    timeout: "Maximum amount of time (in hours) the task can run for."
+  }
+
+  meta {
+    output_meta: {
+      metrics: "Contamination data contained in a JSON file."
+    }
+  }
+}
+
+task formatPhiXdata {
+  input {
+    File data
+    String outputFileNamePrefix
+    File phixReadsStats
+    Int mem = 12
+    Int timeout = 6
+  }
+
+  command <<<
+
+    python3<<CODE
+    import re
+    import json
+
+    #stats from generatePhixFastqs
+    stats_file = open("~{phixReadsStats}")
+    phiXdata = json.load(stats_file)
+
+    #metrics from formatData
+    data_file = open("~{data}")
+    metricsJson = json.load(data_file)
+
+    #phix reads
+    metricsJson["phixReads"] = {}
+    metricsJson["phixReads"]["MismatchCounts"] = phiXdata["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["MismatchCounts"]
+    metricsJson["phixReads"]["IndexSequence"] = phiXdata["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["IndexSequence"]
+    metricsJson["phixReads"]["NumberofReads"] = phiXdata["ConversionResults"][0]["DemuxResults"][0]["NumberReads"]
+
+    #Write dictionary out to JSON file
+    out = open("~{outputFileNamePrefix}_data.json","w")
+    json.dump(metricsJson, out)
+    out.close()
+
+    CODE
+  >>>
+
+  output {
+    File metrics = "~{outputFileNamePrefix}_data.json"
+  }
+
+  runtime {
+    memory: "~{mem} GB"
+    timeout: "~{timeout}"
+  }
+
+  parameter_meta {
+    data: "File containing sequencing and alginment metrics from previous tasks."
+    phixReadsStats: "bcl2fastq stats for PhiX reads."
     outputFileNamePrefix: "Prefix to name output files."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
