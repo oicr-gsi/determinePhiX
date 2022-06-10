@@ -8,6 +8,7 @@ workflow determinePhiX {
     String lane
     String basesMask
     String outputFileNamePrefix
+    Array[String]? phiXindices
   }
 
   call generateFastqs {
@@ -25,14 +26,6 @@ workflow determinePhiX {
       outputFileNamePrefix = outputFileNamePrefix
   }
 
-  call generatePhixFastqs {
-    input:
-      runDirectory = runDirectory,
-      lane = lane,
-      basesMask = basesMask,
-      outputFileNamePrefix = outputFileNamePrefix
-  }
-
   scatter (read in generateFastqs.reads) {
     call getPhiXData {
       input:
@@ -45,10 +38,20 @@ workflow determinePhiX {
   call formatData {
     input:
       data = getPhiXData.data,
-      phixReadsStats = generatePhixFastqs.phixStats,
+      stats = generateFastqs.stats,
       outputFileNamePrefix = outputFileNamePrefix
   }
 
+  if(defined(phiXindices)){
+    Array[String] indices = select_first([phiXindices,[]])
+    call generatePhixFastqs {
+      input:
+        runDirectory = runDirectory,
+        lane = lane,
+        basesMask = basesMask,
+        phiXindices = indices,
+        outputFileNamePrefix = outputFileNamePrefix
+    }
   output {
     File metricsJson = formatData.metrics
     File fastqcResultsR1 = fastQC.zip_bundle_R1
@@ -123,6 +126,7 @@ task generateFastqs {
     File read1 = "~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R1_001.fastq.gz"
     File read2 = "~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R2_001.fastq.gz"
     Array[Pair[String, File]] reads = [("1","~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R1_001.fastq.gz"),("2","~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R2_001.fastq.gz")]
+    File stats = "~{outputDirectory}/Stats/Stats.json"
   }
 
   runtime {
@@ -157,6 +161,7 @@ task generatePhixFastqs {
     String lane
     String basesMask
     String outputFileNamePrefix
+    Array[String] phiXindices
     String modules = "bcl2fastq/2.20.0.422"
     Int mem = 32
     Int timeout = 6
@@ -164,6 +169,7 @@ task generatePhixFastqs {
   }
 
   String outputDirectory = "out"
+  Int indexTotal = length(phiXindices)
 
   command <<<
     #create sample sheet for bcl2fastq with phiX indices
@@ -279,8 +285,8 @@ task getPhiXData {
 task formatData {
   input {
     Array[File] data
+    File stats
     String outputFileNamePrefix
-    File phixReadsStats
     Int mem = 32
     Int timeout = 6
   }
@@ -297,7 +303,7 @@ task formatData {
     with open(r'~{data[1]}') as f2:
         lines_f2 = f2.readlines()
 
-    stats_file = open("~{phixReadsStats}")
+    stats_file = open("~{stats}")
     data = json.load(stats_file)
 
     # Create dictionary for json file
@@ -306,12 +312,6 @@ task formatData {
     metricsJson["lane_number"] = data["ConversionResults"][0]["LaneNumber"]
     metricsJson["total_clusters"] = data["ConversionResults"][0]["TotalClustersPF"]
     #print("TotalClustersRaw ", data["ConversionResults"][0]["TotalClustersRaw"])
-
-    #phix reads
-    metricsJson["phix_reads"] = {}
-    metricsJson["phix_reads"]["index_sequence"] = data["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["IndexSequence"]
-    metricsJson["phix_reads"]["number_of_reads"] = data["ConversionResults"][0]["DemuxResults"][0]["NumberReads"]
-    metricsJson["phix_reads"]["mismatch_counts"] = data["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["MismatchCounts"]
 
     #get metrics for each read
     metricsJson["read_1"] = {}
@@ -354,7 +354,6 @@ task formatData {
 
   parameter_meta {
     data: "File containing output metrics from PhiX alignment."
-    phixReadsStats: "bcl2fastq stats for PhiX reads.."
     outputFileNamePrefix: "Prefix to name output files."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
