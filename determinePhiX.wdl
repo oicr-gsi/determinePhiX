@@ -154,6 +154,7 @@ task generateFastqs {
     modules: "Environment module name and version to load (space separated) before command execution."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
+    threads: "Requested CPU threads."
   }
 
   meta {
@@ -238,6 +239,7 @@ task generatePhixFastqs {
     modules: "Environment module name and version to load (space separated) before command execution."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
+    threads: "Requested CPU threads."
   }
 
   meta {
@@ -290,7 +292,7 @@ task getPhiXData {
     modules: "Environment module name and version to load (space separated) before command execution."
     mem: "Memory (in GB) to allocate to the job."
     timeout: "Maximum amount of time (in hours) the task can run for."
-    threads: "Requested CPU threads"
+    threads: "Requested CPU threads."
 
   }
 
