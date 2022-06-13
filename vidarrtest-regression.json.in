@@ -100,7 +100,7 @@
     "id":"determinePhiX_NextSeqTest",
     "description":"NextSeq test",
     "arguments": {
-      "determinePhiX.basesMask": "y*,n*,n*,y*",
+      "determinePhiX.basesMask": "y*,i*,i*,y*",
       "determinePhiX.outputFileNamePrefix": "150114_NS500141_0187_AH2GN7AFXX",
       "determinePhiX.lane": "1",
       "determinePhiX.runDirectory": {
