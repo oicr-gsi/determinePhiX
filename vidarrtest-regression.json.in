@@ -119,6 +119,7 @@
         "GGGGGGGG",
         "AGATCTCG"
       ],
+      "determinePhiX.fastQC.firstMateFastQC_jobMemory": null,
       "determinePhiX.fastQC.firstMateFastQC_modules": null,
       "determinePhiX.fastQC.firstMateFastQC_timeout": null,
       "determinePhiX.fastQC.firstMateFastQC_javaHeap": null,
