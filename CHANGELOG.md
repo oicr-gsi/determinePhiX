@@ -1,4 +1,4 @@
-## 1.2.0 - 2022-04-22
+## 1.1.0 - 2022-06-14
 - Estimate PhiX content using bbalign instead of bbduk.
 - Scatter alignment over read 1 and read 2.
 - Add fastQC as subworkflow for QC.
