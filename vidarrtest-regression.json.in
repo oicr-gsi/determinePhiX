@@ -5,7 +5,10 @@
     "arguments": {
       "determinePhiX.basesMask": "y*,n*,y*",
       "determinePhiX.outputFileNamePrefix": "150928_SN346_0594_AHCTWGBCXX",
-      "determinePhiX.lane": "1",
+      "determinePhiX.lanes": [
+        1,
+        2
+      ],
       "determinePhiX.runDirectory": {
         "contents": {
           "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
@@ -102,7 +105,9 @@
     "arguments": {
       "determinePhiX.basesMask": "y*,i*,i*,y*",
       "determinePhiX.outputFileNamePrefix": "150114_NS500141_0187_AH2GN7AFXX",
-      "determinePhiX.lane": "1",
+      "determinePhiX.lanes": [
+        1
+      ],
       "determinePhiX.runDirectory": {
         "contents": {
           "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",

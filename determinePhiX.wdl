@@ -5,7 +5,7 @@ import "imports/fastqc.wdl" as fastQC
 workflow determinePhiX {
   input {
     String runDirectory
-    String lane
+    Array[Int] lanes
     String basesMask
     String outputFileNamePrefix
     Array[String]? phiXindices
@@ -14,7 +14,7 @@ workflow determinePhiX {
   call generateFastqs {
     input:
       runDirectory = runDirectory,
-      lane = lane,
+      lanes = lanes,
       basesMask = basesMask,
       outputFileNamePrefix = outputFileNamePrefix
   }
@@ -47,7 +47,7 @@ workflow determinePhiX {
     call generatePhixFastqs {
       input:
         runDirectory = runDirectory,
-        lane = lane,
+        lanes = lanes,
         basesMask = basesMask,
         phiXindices = indices,
         outputFileNamePrefix = outputFileNamePrefix
@@ -72,7 +72,7 @@ workflow determinePhiX {
       description: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE).",
       vidarr_type: "directory"
     }
-    lane: "A single lane to get metrics from."
+    lanes: "A single lane or a list of lanes for no lane splitting (merging lanes)."
     basesMask: "The bases mask to produce the index reads (e.g. single 8bp index = \"Y1N*,I8,N*\", dual 8bp index = \"Y1N*,I8,I8,N*\")."
     outputFileNamePrefix: "Output prefix to prefix output file names with."
     phiXindices: "List of PhiX index or indices to generate PhiX fastqs as additional method to estimate PhiX content, eg. [\"GGGGGGGG\", \"AGATCTCG\"] (Optional)."
@@ -103,7 +103,7 @@ workflow determinePhiX {
 task generateFastqs {
   input {
     String runDirectory
-    String lane
+    Array[Int] lanes
     String basesMask
     String outputFileNamePrefix
     String modules = "bcl2fastq/2.20.0.422"
@@ -122,7 +122,7 @@ task generateFastqs {
     --output-dir "~{outputDirectory}" \
     --create-fastq-for-index-reads \
     --sample-sheet "/dev/null" \
-    --tiles "s_[~{lane}]" \
+    --tiles "s_[~{sep='' lanes}]" \
     --use-bases-mask "~{basesMask}" \
     --no-lane-splitting \
     --interop-dir "~{outputDirectory}/Interop"
@@ -148,7 +148,7 @@ task generateFastqs {
 
   parameter_meta {
     runDirectory: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE)."
-    lane: "A single lane to produce fastqs from."
+    lanes: "A single lane or a list of lanes for no lane splitting (merging lanes)."
     basesMask: "The bases mask to produce the index reads (e.g. single 8bp index = \"Y1N*,I8,N*\", dual 8bp index = \"Y1N*,I8,I8,N*\")."
     outputFileNamePrefix: "Prefix to name output files."
     modules: "Environment module name and version to load (space separated) before command execution."
@@ -169,7 +169,7 @@ task generateFastqs {
 task generatePhixFastqs {
   input {
     String runDirectory
-    String lane
+    Array[Int] lanes
     String basesMask
     String outputFileNamePrefix
     Array[String] phiXindices
@@ -210,7 +210,7 @@ task generatePhixFastqs {
     --output-dir "~{outputDirectory}" \
     --create-fastq-for-index-reads \
     --sample-sheet SampleSheet.csv \
-    --tiles "s_[~{lane}]" \
+    --tiles "s_[~{sep='' lanes}]" \
     --use-bases-mask "~{basesMask}" \
     --no-lane-splitting \
     --interop-dir "~{outputDirectory}/Interop"
@@ -233,7 +233,7 @@ task generatePhixFastqs {
 
   parameter_meta {
     runDirectory: "Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE)."
-    lane: "A single lane to get fastqs from."
+    lanes: "A single lane or a list of lanes for no lane splitting (merging lanes)."
     outputFileNamePrefix: "Prefix to name output files."
     phiXindices: "List of PhiX index or indices to generate PhiX fastqs as additional method to estimate PhiX content."
     modules: "Environment module name and version to load (space separated) before command execution."
