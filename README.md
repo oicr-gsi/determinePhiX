@@ -23,7 +23,7 @@ java -jar cromwell.jar run determinePhiX.wdl --inputs inputs.json
 Parameter|Value|Description
 ---|---|---
 `runDirectory`|String|{'description': 'Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE).', 'vidarr_type': 'directory'}
-`lane`|String|A single lane to get metrics from.
+`lanes`|Array[Int]|A single lane or a list of lanes for no lane splitting (merging lanes)..
 `basesMask`|String|The bases mask to produce the index reads (e.g. single 8bp index = "Y1N*,I8,N*", dual 8bp index = "Y1N*,I8,I8,N*").
 `outputFileNamePrefix`|String|Output prefix to prefix output file names with.
 
@@ -86,11 +86,11 @@ Output | Type | Description
 
 ## Commands
  This section lists command(s) run by WORKFLOW workflow
- 
+
  * Running WORKFLOW
- 
+
  Workflow to estimate the PhiX content of a sequencing run, by performing an alignment of all the sequencing reads agains the PhiX genome. The workflow also runs fastQC on the all reads for QC and has an optional task to extract the PhiX reads using the PhiX indices.
- 
+
  ### Obtain undetermined reads from sequencing run BCL data
  ```
      bcl2fastq \
@@ -100,16 +100,16 @@ Output | Type | Description
      --output-dir "~{outputDirectory}" \
      --create-fastq-for-index-reads \
      --sample-sheet "/dev/null" \
-     --tiles "s_[~{lane}]" \
+     --tiles "s_[~{sep='' lanes}]" \
      --use-bases-mask "~{basesMask}" \
      --no-lane-splitting \
      --interop-dir "~{outputDirectory}/Interop"
- 
+
      #rename files to include run name
      mv ~{outputDirectory}/Undetermined_S0_R1_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R1_001.fastq.gz
      mv ~{outputDirectory}/Undetermined_S0_R2_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R2_001.fastq.gz
  ```
- 
+
  ### Align undetermined reads to PhiX genome
  ```
    $BBMAP_ROOT/share/bbmap/bbmap.sh \
@@ -118,66 +118,66 @@ Output | Type | Description
    out=~{outputFileNamePrefix}.sam \
    ref=$BBMAP_ROOT/share/bbmap/resources/phix174_ill.ref.fa.gz \
    nodisk -Xmx32g
- 
+
    echo "read=~{read}" > ~{outputFileNamePrefix}_data.txt
    cat stderr >>  ~{outputFileNamePrefix}_data.txt
  ```
- 
+
  ### Format output metrics into JSON
  ```
      python3<<CODE
      import re
      import json
- 
+
      with open(r'~{data[0]}') as f1:
          lines_f1 = f1.readlines()
- 
+
      with open(r'~{data[1]}') as f2:
          lines_f2 = f2.readlines()
- 
+
      stats_file = open("~{stats}")
      data = json.load(stats_file)
- 
+
      # Create dictionary for json file
      metricsJson = {}
      metricsJson["run_id"] = data["RunId"]
      metricsJson["lane_number"] = data["ConversionResults"][0]["LaneNumber"]
      metricsJson["total_clusters"] = data["ConversionResults"][0]["TotalClustersPF"]
      #print("TotalClustersRaw ", data["ConversionResults"][0]["TotalClustersRaw"])
- 
+
      #get metrics for each read
      metricsJson["read_1"] = {}
      metricsJson["read_2"] = {}
- 
+
      for file in [lines_f1, lines_f2]:
          d = {}
          for line in file:
- 
+
              line_split = line.split("\t")
              if "Reads Used" in line:
                  d["total_reads"] = line_split[1]
                  d["total_bases"] = line_split[2].split(" ")[0][1:]
- 
+
              if "mapped" in line:
                  d["pct_reads_align_phiX"] = round(float(line_split[1].strip()[:-1]),2)
                  d["number_reads_align_phiX"] = line_split[2].strip()
- 
+
          if file[0].strip() == "read=1":
              metricsJson["read_1"] = d
          elif file[0].strip() == "read=2":
              metricsJson["read_2"] = d
- 
+
      #Write dictionary out to JSON file
      out = open("~{outputFileNamePrefix}_data.json","w")
      json.dump(metricsJson, out)
      out.close()
- 
+
      CODE
  ```
- 
+
  ### Obtain PhiX reads from sequencing run BCL data
  - (OPTIONAL, only runs if phiXindices argument is provided)
- 
+
  ```
      #create sample sheet for bcl2fastq with phiX indices
      echo [Header],,,,, > SampleSheet.csv
@@ -188,17 +188,17 @@ Output | Type | Description
      echo 75,,,, >> SampleSheet.csv
      echo ,,,,, >> SampleSheet.csv
      echo [Data],,,,, >> SampleSheet.csv
- 
+
      if [ "~{indexTotal}" -eq 1 ]; then
        echo Sample_ID,Sample_Name,I7_Index_ID >> SampleSheet.csv
        echo PHIX,PHIX_0001,PhiX Adapter,"~{phiXindices[0]}" >> SampleSheet.csv
      fi
- 
+
      if [ "~{indexTotal}" -eq 2 ]; then
        echo Sample_ID,Sample_Name,I7_Index_ID,index,I5_Index_ID,index2 >> SampleSheet.csv
        echo PHIX,PHIX_0001,PhiX Adapter,"~{phiXindices[0]}",PhiX Adapter,"~{phiXindices[1]}" >> SampleSheet.csv
      fi
- 
+
      #run bcl2fastq using sample sheet created above
      bcl2fastq \
      --runfolder-dir "~{runDirectory}" \
@@ -206,43 +206,43 @@ Output | Type | Description
      --output-dir "~{outputDirectory}" \
      --create-fastq-for-index-reads \
      --sample-sheet SampleSheet.csv \
-     --tiles "s_[~{lane}]" \
+     --tiles "s_[~{sep='' lanes}]" \
      --use-bases-mask "~{basesMask}" \
      --no-lane-splitting \
      --interop-dir "~{outputDirectory}/Interop"
- 
+
      #rename files to include run name
      mv ~{outputDirectory}/PHIX_0001_S1_R1_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R1_001.fastq.gz
      mv ~{outputDirectory}/PHIX_0001_S1_R2_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R2_001.fastq.gz
  ```
- 
+
  ### Format PhiX reads metrics into JSON
  - (OPTIONAL, only runs if phiXindices argument is provided)
  ```
- 
+
      python3<<CODE
      import re
      import json
- 
+
      #stats from generatePhixFastqs
      stats_file = open("~{phixReadsStats}")
      phiXdata = json.load(stats_file)
- 
+
      #metrics from formatData
      data_file = open("~{data}")
      metricsJson = json.load(data_file)
- 
+
      #phix reads
      metricsJson["phixReads"] = {}
      metricsJson["phixReads"]["MismatchCounts"] = phiXdata["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["MismatchCounts"]
      metricsJson["phixReads"]["IndexSequence"] = phiXdata["ConversionResults"][0]["DemuxResults"][0]['IndexMetrics'][0]["IndexSequence"]
      metricsJson["phixReads"]["NumberofReads"] = phiXdata["ConversionResults"][0]["DemuxResults"][0]["NumberReads"]
- 
+
      #Write dictionary out to JSON file
      out = open("~{outputFileNamePrefix}_data.json","w")
      json.dump(metricsJson, out)
      out.close()
- 
+
      CODE
  ```
  ## Support
