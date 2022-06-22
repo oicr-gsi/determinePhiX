@@ -1,4 +1,4 @@
-## 1.1.0 - 2022-06-21
+## 1.1.1 - 2022-06-21
 - Change input lane (string) to lanes (array) to allow the olive to run the workflow with no-lane-splitting.
 
 ## 1.1.0 - 2022-06-14
