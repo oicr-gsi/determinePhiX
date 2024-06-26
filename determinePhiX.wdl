@@ -93,10 +93,19 @@ workflow determinePhiX {
       }
     ]
     output_meta: {
-      metricsJson: "Collection of metrics for the sequencing run and PhiX content in JSON file.",
-      fastqcResultsR1: "FastQC results for undetermined reads 1, zipped.",
-      fastqcResultsR2: "FastQC results for undetermined reads 2, zipped."
+    metricsJson: {
+        description: "Collection of metrics for the sequencing run and PhiX content in JSON file.",
+        vidarr_label: "metricsJson"
+    },
+    fastqcResultsR1: {
+        description: "FastQC results for undetermined reads 1, zipped.",
+        vidarr_label: "fastqcResultsR1"
+    },
+    fastqcResultsR2: {
+        description: "FastQC results for undetermined reads 2, zipped.",
+        vidarr_label: "fastqcResultsR2"
     }
+}
   }
 }
 

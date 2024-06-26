@@ -23,7 +23,7 @@ java -jar cromwell.jar run determinePhiX.wdl --inputs inputs.json
 Parameter|Value|Description
 ---|---|---
 `runDirectory`|String|{'description': 'Illumina run directory (e.g. /path/to/191219_M00000_0001_000000000-ABCDE).', 'vidarr_type': 'directory'}
-`lanes`|Array[Int]|A single lane or a list of lanes for no lane splitting (merging lanes)..
+`lanes`|Array[Int]|A single lane or a list of lanes for no lane splitting (merging lanes).
 `basesMask`|String|The bases mask to produce the index reads (e.g. single 8bp index = "Y1N*,I8,N*", dual 8bp index = "Y1N*,I8,I8,N*").
 `outputFileNamePrefix`|String|Output prefix to prefix output file names with.
 
@@ -77,22 +77,23 @@ Parameter|Value|Default|Description
 
 ### Outputs
 
-Output | Type | Description
----|---|---
-`metricsJson`|File|Collection of metrics for the sequencing run and PhiX content in JSON file.
-`fastqcResultsR1`|File|FastQC results for undetermined reads 1, zipped.
-`fastqcResultsR2`|File?|FastQC results for undetermined reads 2, zipped.
+Output | Type | Description | Labels
+---|---|---|---
+`metricsJson`|File|Collection of metrics for the sequencing run and PhiX content in JSON file.|vidarr_label: metricsJson
+`fastqcResultsR1`|File|FastQC results for undetermined reads 1, zipped.|vidarr_label: fastqcResultsR1
+`fastqcResultsR2`|File?|FastQC results for undetermined reads 2, zipped.|vidarr_label: fastqcResultsR2
 
 
 ## Commands
- This section lists command(s) run by WORKFLOW workflow
+This section lists command(s) run by determine PhiX workflow
 
- * Running WORKFLOW
+* Running determine PhiX
 
- Workflow to estimate the PhiX content of a sequencing run, by performing an alignment of all the sequencing reads agains the PhiX genome. The workflow also runs fastQC on the all reads for QC and has an optional task to extract the PhiX reads using the PhiX indices.
+Workflow to estimate the PhiX content of a sequencing run, by performing an alignment of all the sequencing reads agains the PhiX genome. The workflow also runs fastQC on the all reads for QC and has an optional task to extract the PhiX reads using the PhiX indices.
 
- ### Obtain undetermined reads from sequencing run BCL data
- ```
+### Obtain undetermined reads from sequencing run BCL data
+
+```
      bcl2fastq \
      --runfolder-dir "~{runDirectory}" \
      --intensities-dir "~{runDirectory}/Data/Intensities/" \
@@ -108,10 +109,11 @@ Output | Type | Description
      #rename files to include run name
      mv ~{outputDirectory}/Undetermined_S0_R1_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R1_001.fastq.gz
      mv ~{outputDirectory}/Undetermined_S0_R2_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_Undetermined_S0_R2_001.fastq.gz
- ```
+```
 
- ### Align undetermined reads to PhiX genome
- ```
+### Align undetermined reads to PhiX genome
+
+```
    $BBMAP_ROOT/share/bbmap/bbmap.sh \
    threads=6 \
    in=~{fastqSingleRead} \
@@ -121,10 +123,11 @@ Output | Type | Description
 
    echo "read=~{read}" > ~{outputFileNamePrefix}_data.txt
    cat stderr >>  ~{outputFileNamePrefix}_data.txt
- ```
+```
 
- ### Format output metrics into JSON
- ```
+### Format output metrics into JSON
+
+```
      python3<<CODE
      import re
      import json
@@ -173,12 +176,13 @@ Output | Type | Description
      out.close()
 
      CODE
- ```
+```
 
- ### Obtain PhiX reads from sequencing run BCL data
- - (OPTIONAL, only runs if phiXindices argument is provided)
+### Obtain PhiX reads from sequencing run BCL data
 
- ```
+- (OPTIONAL, only runs if phiXindices argument is provided)
+
+```
      #create sample sheet for bcl2fastq with phiX indices
      echo [Header],,,,, > SampleSheet.csv
      echo Date,2022-05-26-04:00,,,, >> SampleSheet.csv
@@ -214,11 +218,11 @@ Output | Type | Description
      #rename files to include run name
      mv ~{outputDirectory}/PHIX_0001_S1_R1_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R1_001.fastq.gz
      mv ~{outputDirectory}/PHIX_0001_S1_R2_001.fastq.gz ~{outputDirectory}/~{outputFileNamePrefix}_PHIX_0001_S1_R2_001.fastq.gz
- ```
+```
 
- ### Format PhiX reads metrics into JSON
- - (OPTIONAL, only runs if phiXindices argument is provided)
- ```
+### Format PhiX reads metrics into JSON
+- (OPTIONAL, only runs if phiXindices argument is provided)
+```
 
      python3<<CODE
      import re
@@ -244,8 +248,8 @@ Output | Type | Description
      out.close()
 
      CODE
- ```
- ## Support
+```
+## Support
 
 For support, please file an issue on the [Github project](https://github.com/oicr-gsi) or send an email to gsi@oicr.on.ca .
 
