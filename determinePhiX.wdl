@@ -81,7 +81,7 @@ workflow determinePhiX {
   meta {
     author: "Murto Hilali & Michael Laszloffy, updated by Beatriz Lujan"
     email: "michael.laszloffy@oicr.on.ca, beatriz.lujantoro@oicr.on.ca"
-    description: "Workflow to determine PhiX content of a sequencing run lane, by alignment of PhiX reference genome to undetermined reads and using the PhiX indices to pull PhiX reads, also runs fastQC on undetermined reads."
+    description: "Workflow to determine PhiX content of a sequencing run lane, by alignment of PhiX reference genome to undetermined reads and using the PhiX indices to pull PhiX reads, also runs fastQC on undetermined reads. The PhiX Control Library (commonly referred to as PhiX, FC-110-3001) is derived from the small, well-characterized bacteriophage genome, PhiX. It is a concentrated Illumina library (10 nM in 10 µl) that has an average size of 500 bp and consists of balanced base composition at ~45% GC and ~55% AT. The PhiX library provides a quality control for cluster generation, sequencing, and alignment, and a calibration control for cross-talk matrix generation, phasing, and prephasing. It can be rapidly aligned to estimate relevant sequencing by synthesis (SBS) metrics such as phasing and error rate."
     dependencies: [
       {
         name: "bcl2fastq/2.20.0.422",
