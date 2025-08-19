@@ -4,14 +4,14 @@
     "description":"HiSeq test",
     "arguments": {
       "determinePhiX.basesMask": "y*,n*,y*",
-      "determinePhiX.outputFileNamePrefix": "150928_SN346_0594_AHCTWGBCXX",
+      "determinePhiX.outputFileNamePrefix": "Test01",
       "determinePhiX.lanes": [
         1,
         2
       ],
       "determinePhiX.runDirectory": {
         "contents": {
-          "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
+          "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/test_inputs/HiSeq_Test",
           "externalIds": [
             {
               "id": "TEST",
@@ -94,7 +94,7 @@
       {
         "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
         "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-        "output_metrics": "/.mounts/labs/gsi/testdata/determinePhiX/metrics/HiSeqTest/output.metrics",
+        "output_metrics": "/.mounts/labs/gsi/testdata/determinePhiX/output_metrics/workflow_test_01.metrics",
         "type": "script"
       }
     ]
@@ -104,13 +104,13 @@
     "description":"NextSeq test",
     "arguments": {
       "determinePhiX.basesMask": "y*,i*,i*,y*",
-      "determinePhiX.outputFileNamePrefix": "150114_NS500141_0187_AH2GN7AFXX",
+      "determinePhiX.outputFileNamePrefix": "Test02",
       "determinePhiX.lanes": [
         1
       ],
       "determinePhiX.runDirectory": {
         "contents": {
-          "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/input_data/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
+          "configuration":"/.mounts/labs/gsi/testdata/determinePhiX/test_inputs/NextSeq_Test",
           "externalIds": [
             {
               "id": "TEST",
@@ -196,7 +196,7 @@
       {
         "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
         "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-        "output_metrics": "/.mounts/labs/gsi/testdata/determinePhiX/metrics/NextSeqTest/output.metrics",
+        "output_metrics": "/.mounts/labs/gsi/testdata/determinePhiX/output_metrics/workflow_test_02.metrics",
         "type": "script"
       }
     ]
